@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s2s-deployment
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: s2s
+  template:
+    metadata:
+      labels:
+        app: s2s
+    spec:
+      containers:
+      - name: s2s
+        image: kaanberkozbek/s2s
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/kpf/enable-config
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: my-config-map
+          items:
+          - key: Cleverbit__Enabled
+            path: Cleverbit__Enabled
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: s2s-gateway
+  namespace: istio-system #
+  labels:
+    app: s2s
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "s2s.cb-interview.com"
